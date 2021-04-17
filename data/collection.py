@@ -97,7 +97,7 @@ def get_game_info(game):
 
     match_url = \
         'https://kr.api.riotgames.com/lol/match/v4/timelines/by-match/{}?api_key=' +  API_KEY
-    start = 14594
+    start = 0
 
     for b in tqdm(range(start, len(game))):
         try:
@@ -108,7 +108,7 @@ def get_game_info(game):
             req = _check_status(req, b, match_url, game_id)
             
             # json data에서 필요한 frames 필드만
-            if 'frames' not in req.json():
+            if 'frames' not in req.json:                                               
                 print(req)
                 continue
             frames = req.json()['frames']
@@ -230,7 +230,7 @@ def _check_status(req, b, match_url, game_id):
     
     return req
 
-def cleanse_events(reader):
+def cleanse_participants(reader):
     for i, chunk in enumerate(tqdm(reader)):
         chunk_cleaned = chunk.drop_duplicates()
         if len(chunk) != len(chunk_cleaned):
@@ -239,9 +239,9 @@ def cleanse_events(reader):
         #파일에 추가
         if i==0:
             print('Creating a new file...')
-            chunk.to_csv('events_cleaned.csv', index=False, encoding='cp949')
+            chunk.to_csv('participants_cleaned.csv', index=False, encoding='cp949')
         else:
-            chunk.to_csv('events_cleaned.csv', mode='a', header=False, index=False, encoding='cp949')
+            chunk.to_csv('participants_cleaned.csv', mode='a', header=False, index=False, encoding='cp949')
 
 
 if __name__ == "__main__":
@@ -256,10 +256,10 @@ if __name__ == "__main__":
     #league_df = pd.read_csv(file_path, encoding='cp949')    
     #match_info_df = get_game_ids(league_df)
 
-    match_info_df = pd.read_csv(cfg['file']['match_info_path'], encoding='cp949')
-    game_info_df = get_game_info(match_info_df)
+    # match_info_df = pd.read_csv(cfg['file']['match_info_path'], encoding='cp949')
+    # game_info_df = get_game_info(match_info_df)
 
-    # game_info_reader = pd.read_csv(cfg['file']['participants_info_path'], encoding='cp949',
-    #                             iterator=True,
-    #                             chunksize=1000)
-    # cleanse_events(game_info_reader)
+    game_info_reader = pd.read_csv(cfg['file']['participants_info_path'], encoding='cp949',
+                                iterator=True,
+                                chunksize=1000)
+    cleanse_participants(game_info_reader)

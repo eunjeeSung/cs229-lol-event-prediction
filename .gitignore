@@ -1,6 +1,10 @@
+.vscode/
+.DS_Store
+**.pyc
+**__pycache__
+
 **.csv
 **.cfg
 
-.vscode/
-
 backup/
+runs/
