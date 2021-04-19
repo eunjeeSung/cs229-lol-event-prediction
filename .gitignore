@@ -2,9 +2,11 @@
 .DS_Store
 **.pyc
 **__pycache__
+**.ipynb_checkpoints
 
 **.csv
 **.cfg
+**.ipynb
 
 backup/
 runs/
