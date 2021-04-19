@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 from data import LoLDataset
 from rmtpp import RMTPP
+from loss import RMTPPLoss
 
 if __name__ == "__main__":
     cfg = configparser.ConfigParser()
@@ -32,7 +33,7 @@ if __name__ == "__main__":
                             drop_last=True)
 
     # Hyperparameters
-    num_epochs = 10000
+    num_epochs = 100000
     learning_rate = 0.1
 
     num_classes = 3 # binary marker class + timestamp
@@ -50,8 +51,8 @@ if __name__ == "__main__":
                 num_classes)
     model.to(device)
 
-    mse_criterion = torch.nn.MSELoss()
-    bce_criterion = torch.nn.CrossEntropyLoss()
+    # timestamp_criterion = torch.nn.MSELoss()
+    marker_criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     i = 0
@@ -65,19 +66,19 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             hidden = model.init_hidden()
 
-            outputs, hidden = model(timestamps, onehots, hidden)
-            preds_timestamp = outputs[:, :, 0].unsqueeze(2)
-            preds_marker = outputs[:, :, 1:].permute(0, 2, 1)
+            scores, intensity, hidden = model(timestamps[:, :-1], onehots[:, :-1], hidden)
+            preds_timestamp = scores[:, :, 0].unsqueeze(2)
+            preds_marker = scores[:, :, 1:].permute(0, 2, 1)
 
-            timestamp_loss = mse_criterion(preds_timestamp[:, :-1], timestamps[:, 1:])
-            marker_loss = bce_criterion(preds_marker[:, :, :-1], markers[:, 1:].long())
-            
+            timestamp_loss = RMTPPLoss(preds_timestamp, timestamps[:, 1:])
+            marker_loss = marker_criterion(preds_marker, markers[:, 1:].long())      
+
             loss = timestamp_loss + marker_loss
 
             loss.backward()
             optimizer.step()
 
-            if i % 10 == 0:
+            if i % 1000 == 0:
                 print("Epoch: %d, marker loss: %1.5f, timestamp loss: %1.5f" \
                         % (epoch, marker_loss.item(), timestamp_loss.item()))
                 writer.add_scalar('Loss/train', loss, i)

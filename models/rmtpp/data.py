@@ -25,7 +25,9 @@ class LoLDataset(Dataset):
         df = pd.read_csv(os.path.join(self.input_dir, gfile))
 
         timestamp = torch.Tensor(df['timestamp'])
+        timestamp -= torch.roll(timestamp, 1, 0)
         marker = torch.Tensor(df['event_type'])
+
         onehot = marker
         onehot = F.one_hot(onehot.long(), num_classes=2).float()
         return timestamp, onehot, marker
