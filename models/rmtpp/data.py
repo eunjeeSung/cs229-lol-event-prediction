@@ -23,6 +23,7 @@ class LoLDataset(Dataset):
     def __getitem__(self, index):
         gid, gfile = self.gids[index], self.gfiles[index]
         df = pd.read_csv(os.path.join(self.input_dir, gfile))
+        df = df.sort_values(['timestamp'])
 
         timestamp = torch.Tensor(df['timestamp'])
         timestamp -= torch.roll(timestamp, 1, 0)
@@ -30,4 +31,4 @@ class LoLDataset(Dataset):
 
         onehot = marker
         onehot = F.one_hot(onehot.long(), num_classes=2).float()
-        return timestamp, onehot, marker
+        return gid, timestamp, onehot, marker

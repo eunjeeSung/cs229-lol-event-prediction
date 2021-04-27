@@ -12,9 +12,8 @@ class RMTPP(nn.Module):
         self.rnn = nn.RNN(input_size=hidden_size,
                         hidden_size=hidden_size,
                         batch_first=True)
-        self.linear_scr = nn.Linear(hidden_size, num_classes)
-        self.linear_in = nn.Linear(hidden_size, 1)
-        #self.intensity_fn = lambda x: torch.exp( self.linear_lin(x) )
+        self.linear_cate = nn.Linear(hidden_size, num_classes)
+        self.linear_acc = nn.Linear(hidden_size, 1)
         
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -27,12 +26,12 @@ class RMTPP(nn.Module):
         input_combined = torch.cat((timestamps, embedded_markers), axis=2)
         out, hidden = self.rnn(input_combined, hidden)
         
-        # Ouptut: score
-        score = self.linear_scr(out)
+        # Ouptut: category score
+        cate_score = self.linear_cate(out)
 
-        # Output:
-        intensity = self.linear_in
-        return score, intensity, hidden
+        # Output: timing score according to accumulative information
+        historic_acc_info = self.linear_acc(out)
+        return cate_score, historic_acc_info, hidden
 
     def init_hidden(self):
         return torch.zeros(self.num_layers, 1, self.hidden_size)
